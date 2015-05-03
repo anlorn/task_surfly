@@ -1,4 +1,5 @@
 import json
+import sys
 from threading import Lock
 from tornado import ioloop, web, websocket
 from tornado.options import define, options, parse_command_line
@@ -49,7 +50,7 @@ class RoomHandler(web.RequestHandler):
 
     @web.asynchronous
     def get(self):
-        self.write(open("room.html").read())
+        self.write(open(sys.argv[1]).read())
         self.finish()
 
 
