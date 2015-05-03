@@ -85,6 +85,7 @@
             function sendNewLines() {
                 var data = JSON.stringify({'action': 'lines', 'data':lines});
                 socket.send(data);
+                lines = [];
             }
 
             function updateLines(lines) {

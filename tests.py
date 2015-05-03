@@ -26,6 +26,11 @@ class TestBoard(unittest.TestCase):
         self.board.clean()
 
 
+class TestClients(unittest.TestCase):
+
+    def test_add_client(self):
+        pass
+
 if __name__ == '__main__':
     pass
     unittest.main()
