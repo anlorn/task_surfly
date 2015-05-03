@@ -1,0 +1,69 @@
+<body>
+<head>
+    <title>Sufly test task</title>
+</head>
+    <html>
+        <div id="drawbBoard">
+
+        </div>
+        <table id="usersList">
+            <thead>
+                <tr>
+                    <td>ip</td>
+                    <td>ua</td>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </html>
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script>
+    $(document).ready(function() {
+            var my_id = -1;
+            var socket = new WebSocket("ws://127.0.0.1:8888/ws/");
+
+            function mHandler(message) {
+                var jsonMessage = $.parseJSON(message);
+                var action = jsonMessage['action'];
+                switch (action) {
+                    case 'clients':
+                        updateClients(jsonMessage['data']);
+                        break
+                    default:
+                        alert("We've got wrong command " + action);
+                }
+            }
+
+            function updateClients(clients) {
+                var users = $("#usersList tbody");
+                users.children("tr").remove();
+                console.log(clients);
+                for(var i = 0; i < clients.length; i++) {
+                    var ip = clients[i]['ip'];
+                    var ua = clients[i]['ua'];
+                    $("<tr><td>" + ip + "</td><td>" + ua + "</td></tr>").appendTo(users);
+                }
+            }
+
+            socket.onopen = function() {
+                //socket.send("test");
+            };
+            socket.onclose = function() {
+                socket.close()
+            };
+            socket.onmessage = function(event) {
+                if (my_id === -1) {
+                    my_id = event.data;
+                } else {
+                    mHandler(event.data);
+                }
+
+            };
+            socket.onerror = function(error) {
+                alert("WebSocket Error: " + error.message);
+            };
+
+    });
+</script>
+</body>
