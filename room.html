@@ -23,6 +23,7 @@
             var my_id = -1;
             var drawBoardId = "drawbBoard"
             var lines = [];
+            var drawedLines = [];
             var socket = new WebSocket("ws://127.0.0.1:8888/ws/");
 
 
@@ -90,18 +91,28 @@
 
             function updateLines(lines) {
                 var ctx = getCanvas();
-                ctx.clearRect ( 0 , 0 , 320, 480);
+                //ctx.clearRect ( 0 , 0 , 320, 480);
                 for(var i = 0; i < lines.length; i++) {
                     var x = lines[i][0];
                     var y = lines[i][1];
-                    drawLine(ctx, x, y);
+                    var key = makeKey(x, y);
+                    if (drawedLines.indexOf(key) == -1) {
+                        drawLine(ctx, x, y);
+                    }
                 }
                 ctx.stroke()
+            }
+
+            function makeKey(x, y) {
+                return x + "_" + y;
             }
 
             $('#' + drawBoardId).click( function(e) {
                 var ctx = getCanvas();
                 lines.push([e.pageX, e.pageY]);
+                drawedLines.push(makeKey(e.pageX, e.pageY));
+                //console.log(lines);
+                //console.log(drawedLines);
                 drawLine(ctx, e.pageX, e.pageY);
                 ctx.stroke();
                 sendNewLines();
