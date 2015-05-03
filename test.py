@@ -19,13 +19,13 @@ class ClientsHolder(object):
         client_id = ClientsHolder._last_id
         ClientsHolder._last_id += 1
         self._lock_object.release()
-        self._clients[ClientsHolder._last_id] = obj
+        self._clients[client_id] = obj
         return client_id
 
     def del_client(self, client_id, callback):
         if client_id in self._clients:
             self._lock_object.acquire()
-            self._clients.pop(client_id)
+            del self._clients[client_id]
             self._lock_object.release()
         callback()
 
