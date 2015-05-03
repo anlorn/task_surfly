@@ -23,6 +23,11 @@ class Board(object):
             self._lines[key] = (x, y,)
         self._lock_object.release()
 
+    def clean(self):
+        self._lock_object.acquire()
+        Board._lines = {}
+        self._lock_object.release()
+
     def get_lines(self):
         return self._lines.values()
 
@@ -72,12 +77,13 @@ def new_line_worker(data, socket):
     board.add_lines(data)
     socket.update_lines()
 
+
 class RoomHandler(web.RequestHandler):
 
-    @web.asynchronous
     def get(self):
         self.write(open(sys.argv[1]).read())
         self.finish()
+
 
 class WsHandler(websocket.WebSocketHandler):
 
