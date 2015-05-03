@@ -10,6 +10,7 @@ define("port", default=8888, type=int)
 
 
 class Board(object):
+
     _lock_object = Lock()
     _lines = {}
 
@@ -81,6 +82,7 @@ class RoomHandler(web.RequestHandler):
 class WsHandler(websocket.WebSocketHandler):
 
     workers = {'lines': new_line_worker}
+    action_key = 'action'
 
     def open(self, *args):
         self.stream.set_nodelay(True)
@@ -88,25 +90,30 @@ class WsHandler(websocket.WebSocketHandler):
         self.write_message(str(client_id))
         self.id = client_id
         self.send_new_clients_list()
-        self.update_lines()
+        self.send_lines()
 
     def send_new_clients_list(self):
         data = clients.get_all_clients_data()
-        self.broadcast(json.dumps({'action': 'clients', 'data': data}))
+        self.broadcast(json.dumps({self.action_key: 'clients', 'data': data}))
 
     def update_lines(self):
         data = board.get_lines()
-        self.broadcast(json.dumps({'action': 'update_lines', 'data': data}))
+        self.broadcast(json.dumps({self.action_key: 'update_lines', 'data': data}, True))
 
-    def broadcast(self, data):
+    def send_lines(self):
+        data = board.get_lines()
+        self.write_message({self.action_key: 'update_lines', 'data': data})
+
+    def broadcast(self, data, ignore_self=False):
         for client_id, cl in clients:
+            if self.id == client_id and ignore_self:
+                continue
             try:
                 cl.write_message(data)
             except websocket.WebSocketClosedError:
                 pass
 
     def on_message(self, message):
-        print "message", message
         data = json.loads(message)
         action = data['action']
         self.workers[action](data['data'], self)
