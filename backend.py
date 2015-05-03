@@ -10,11 +10,17 @@ define("port", default=8888, type=int)
 
 
 class Board(object):
+    """
+    Stores current drawer board which shared between users
+    """
 
     _lock_object = Lock()
     _lines = {}
 
     def add_lines(self, lines):
+        """
+        Add new lines on board
+        """
         self._lock_object.acquire()
         for line in lines:
             x, y = line
@@ -24,11 +30,17 @@ class Board(object):
         self._lock_object.release()
 
     def clean(self):
+        """
+        Clean current board
+        """
         self._lock_object.acquire()
         Board._lines = {}
         self._lock_object.release()
 
     def get_lines(self):
+        """
+        Return lines stored on board
+        """
         return self._lines.values()
 
     def _make_key(self, x, y):
@@ -36,6 +48,9 @@ class Board(object):
 
 
 class ClientsHolder(object):
+    """
+    Stores users who works with the service
+    """
 
     _lock_object = Lock()
     _clients = {}

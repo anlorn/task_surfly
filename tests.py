@@ -25,6 +25,7 @@ class TestBoard(unittest.TestCase):
     def tearDown(self):
         self.board.clean()
 
+
 if __name__ == '__main__':
     pass
     unittest.main()
