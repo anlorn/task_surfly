@@ -9,6 +9,26 @@ define("port", default=8888, type=int)
 #define("room_template", type=str)
 
 
+class Board(object):
+    _lock_object = Lock()
+    _lines = {}
+
+    def add_lines(self, lines):
+        self._lock_object.acquire()
+        for line in lines:
+            x, y = line
+            x, y = int(x), int(y)
+            key = self._make_key(x, y)
+            self._lines[key] = (x, y,)
+        self._lock_object.release()
+
+    def get_lines(self):
+        return self._lines.values()
+
+    def _make_key(self, x, y):
+        return "%d_%d" % (x, y)
+
+
 class ClientsHolder(object):
 
     _lock_object = Lock()
@@ -44,7 +64,12 @@ class ClientsHolder(object):
             yield (id, cl)
 
 clients = ClientsHolder()
+board = Board()
 
+
+def new_line_worker(data, socket):
+    board.add_lines(data)
+    socket.update_lines()
 
 class RoomHandler(web.RequestHandler):
 
@@ -53,8 +78,9 @@ class RoomHandler(web.RequestHandler):
         self.write(open(sys.argv[1]).read())
         self.finish()
 
-
 class WsHandler(websocket.WebSocketHandler):
+
+    workers = {'lines': new_line_worker}
 
     def open(self, *args):
         self.stream.set_nodelay(True)
@@ -67,6 +93,10 @@ class WsHandler(websocket.WebSocketHandler):
         data = clients.get_all_clients_data()
         self.broadcast(json.dumps({'action': 'clients', 'data': data}))
 
+    def update_lines(self):
+        data = board.get_lines()
+        self.broadcast(json.dumps({'action': 'update_lines', 'data': data}))
+
     def broadcast(self, data):
         for client_id, cl in clients:
             try:
@@ -75,7 +105,10 @@ class WsHandler(websocket.WebSocketHandler):
                 pass
 
     def on_message(self, message):
-        print "message"
+        print "message", message
+        data = json.loads(message)
+        action = data['action']
+        self.workers[action](data['data'], self)
 
     def on_close(self):
         clients.del_client(self.id, self.send_new_clients_list)

@@ -3,9 +3,9 @@
     <title>Sufly test task</title>
 </head>
     <html>
-        <div id="drawbBoard">
+        <canvas id="drawbBoard" height='320' width='480'>
 
-        </div>
+        </canvas>
         <table id="usersList">
             <thead>
                 <tr>
@@ -21,7 +21,10 @@
 <script>
     $(document).ready(function() {
             var my_id = -1;
+            var drawBoardId = "drawbBoard"
+            var lines = [];
             var socket = new WebSocket("ws://127.0.0.1:8888/ws/");
+
 
             function mHandler(message) {
                 var jsonMessage = $.parseJSON(message);
@@ -30,6 +33,9 @@
                     case 'clients':
                         updateClients(jsonMessage['data']);
                         break
+                    case 'update_lines':
+                        updateLines(jsonMessage['data']);
+                        break;
                     default:
                         alert("We've got wrong command " + action);
                 }
@@ -60,9 +66,46 @@
                 }
 
             };
+
             socket.onerror = function(error) {
                 alert("WebSocket Error: " + error.message);
             };
+
+            function getCanvas() {
+                var canvas = document.getElementById(drawBoardId);
+                var ctx = canvas.getContext("2d");
+                return ctx;
+            }
+
+            function drawLine(ctx, x, y) {
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + 10, y + 10);
+            }
+
+            function sendNewLines() {
+                var data = JSON.stringify({'action': 'lines', 'data':lines});
+                socket.send(data);
+            }
+
+            function updateLines(lines) {
+                var ctx = getCanvas();
+                ctx.clearRect ( 0 , 0 , 320, 480);
+                for(var i = 0; i < lines.length; i++) {
+                    var x = lines[i][0];
+                    var y = lines[i][1];
+                    drawLine(ctx, x, y);
+                }
+                ctx.stroke()
+            }
+
+            $('#' + drawBoardId).click( function(e) {
+                var ctx = getCanvas();
+                lines.push([e.pageX, e.pageY]);
+                drawLine(ctx, e.pageX, e.pageY);
+                ctx.stroke();
+                sendNewLines();
+            });
+
 
     });
 </script>
