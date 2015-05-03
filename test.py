@@ -88,6 +88,7 @@ class WsHandler(websocket.WebSocketHandler):
         self.write_message(str(client_id))
         self.id = client_id
         self.send_new_clients_list()
+        self.update_lines()
 
     def send_new_clients_list(self):
         data = clients.get_all_clients_data()
